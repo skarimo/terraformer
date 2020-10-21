@@ -32,13 +32,12 @@ var (
 	commandTerraformDestroy = "terraform destroy -auto-approve"
 	commandTerraformApply   = "terraform apply -auto-approve"
 	commandTerraformOutput  = "terraform output"
-	datadogResourcePath     = "tests/datadog/resources/"
+	datadogResourcesPath    = "tests/datadog/resources/"
 )
 
 type DatadogConfig struct {
 	apiKey string
 	appKey string
-	//apiUrl string
 }
 
 type TerraformerDatadogConfig struct {
@@ -55,9 +54,17 @@ func main() {
 	cfg := getConfig()
 	provider := &datadog_terraforming.DatadogProvider{}
 	services := getServices(cfg, provider)
+	rootPath, _ := os.Getwd()
+
+	// Switch to Datadog tests resources directory
+	err := os.Chdir(datadogResourcesPath)
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
 
 	// Initialize the Datadog provider for resource creation
-	err := initializeDatadogProvider(cfg)
+	err = initializeDatadogProvider(cfg)
 	if err != nil {
 		log.Println("Error initializing the Datadog provider", err)
 		os.Exit(1)
@@ -99,20 +106,16 @@ func main() {
 			os.Exit(1)
 		}
 	}
+	err = os.Chdir(rootPath)
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
 }
 
-func destroyDatadogResources(cfg *Config, service string) error {
-	rootPath, _ := os.Getwd()
-	if err := chDir(datadogResourcePath); err != nil {
-		return err
-	}
-
+func destroyDatadogResources(cfg *Config, servicePath string) error {
 	// Destroy resources
-	if err := cmdRun(cfg, []string{commandTerraformDestroy, service}, true); err != nil {
-		return err
-	}
-
-	if err := chDir(rootPath); err != nil {
+	if err := cmdRun(cfg, []string{commandTerraformDestroy, servicePath}, true); err != nil {
 		return err
 	}
 
@@ -178,12 +181,7 @@ func getAllServices(provider *datadog_terraforming.DatadogProvider) []string {
 }
 
 func createDatadogResource(cfg *Config, service string) ([]string, error) {
-	rootPath, _ := os.Getwd()
-	if err := chDir(datadogResourcePath); err != nil {
-		return nil, err
-	}
-
-	//// Create resource
+	// Create resource
 	if err := cmdRun(cfg, []string{commandTerraformApply, service}, true); err != nil {
 		return nil, err
 	}
@@ -195,26 +193,12 @@ func createDatadogResource(cfg *Config, service string) ([]string, error) {
 	}
 	resourceIds := parseTerraformOutput(string(output))
 
-	if err := chDir(rootPath); err != nil {
-		return nil, err
-	}
-	rootPath, _ = os.Getwd()
-
 	return resourceIds, nil
 }
 
 func initializeDatadogProvider(cfg *Config) error {
-	rootPath, _ := os.Getwd()
-	if err := chDir(datadogResourcePath); err != nil {
-		return err
-	}
-
 	// Initialize the provider
 	if err := cmdRun(cfg, []string{commandTerraformInit}, true); err != nil {
-		return err
-	}
-
-	if err := chDir(rootPath); err != nil {
 		return err
 	}
 
@@ -234,15 +218,6 @@ func cmdRun(cfg *Config, args []string, cmdLog bool) error {
 	}
 
 	err := cmd.Run()
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	return nil
-}
-
-func chDir(dir string) error {
-	err := os.Chdir(dir)
 	if err != nil {
 		log.Println(err)
 		return err
