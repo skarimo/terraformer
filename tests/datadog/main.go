@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"sort"
+	"strconv"
 	"strings"
 
 	datadog_terraforming "github.com/GoogleCloudPlatform/terraformer/providers/datadog"
@@ -46,18 +47,22 @@ type TerraformerDatadogConfig struct {
 }
 
 type Config struct {
-	Datadog     DatadogConfig
-	Terraformer TerraformerDatadogConfig
+	Datadog      DatadogConfig
+	Terraformer  TerraformerDatadogConfig
+	logCMDOutput bool
 }
 
 func main() {
-	cfg := getConfig()
+	cfg, err := getConfig()
+	if err != nil {
+		log.Print(err)
+	}
 	provider := &datadog_terraforming.DatadogProvider{}
 	services := getServices(cfg, provider)
 	rootPath, _ := os.Getwd()
 
 	// Switch to Datadog tests resources directory
-	err := os.Chdir(datadogResourcesPath)
+	err = os.Chdir(datadogResourcesPath)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
@@ -79,6 +84,7 @@ func main() {
 
 		filter := fmt.Sprintf("%s=%s", service, strings.Join(resourceIds, ":"))
 
+		log.Printf("Importing %s resource via Terraformer. IDS: %s", service, resourceIds)
 		err = cmd.Import(provider, cmd.ImportOptions{
 			Resources:   []string{service},
 			PathPattern: cmd.DefaultPathPattern,
@@ -111,11 +117,13 @@ func main() {
 		log.Println(err)
 		os.Exit(1)
 	}
+	log.Print("Successfully created and imported resources with Terraformer")
 }
 
 func destroyDatadogResources(cfg *Config, servicePath string) error {
 	// Destroy resources
-	if err := cmdRun(cfg, []string{commandTerraformDestroy, servicePath}, true); err != nil {
+	log.Printf("Destroying %s resource", servicePath)
+	if err := cmdRun(cfg, []string{commandTerraformDestroy, servicePath}); err != nil {
 		return err
 	}
 
@@ -129,7 +137,8 @@ func terraformPlan(cfg *Config, provider *datadog_terraforming.DatadogProvider, 
 		return err
 	}
 
-	err := cmdRun(cfg, []string{commandTerraformInit, "&&", commandTerraformPlan}, true)
+	log.Printf("Running terraform plan against Terraformer generated %s resource", service)
+	err := cmdRun(cfg, []string{commandTerraformInit, "&&", commandTerraformPlan})
 	if err != nil {
 		return err
 	}
@@ -138,10 +147,20 @@ func terraformPlan(cfg *Config, provider *datadog_terraforming.DatadogProvider, 
 		return err
 	}
 
+	log.Printf("terraform plan did not generate any diffs for %s", service)
 	return nil
 }
 
-func getConfig() *Config {
+func getConfig() (*Config, error) {
+	logCMDOutput := false
+	if envVar := os.Getenv("LOG_CMD_OUTPUT"); envVar != "" {
+		logCMDOutputEnv, err := strconv.ParseBool(envVar)
+		if err != nil {
+			return nil, err
+		}
+		logCMDOutput = logCMDOutputEnv
+	}
+
 	return &Config{
 		Datadog: DatadogConfig{
 			apiKey: os.Getenv("DD_TEST_CLIENT_API_KEY"),
@@ -151,7 +170,8 @@ func getConfig() *Config {
 			filter:   os.Getenv("DATADOG_TERRAFORMER_FILTER"),
 			services: os.Getenv("DATADOG_TERRAFORMER_SERVICES"),
 		},
-	}
+		logCMDOutput: logCMDOutput,
+	}, nil
 }
 
 func getServices(cfg *Config, provider *datadog_terraforming.DatadogProvider) []string {
@@ -182,7 +202,8 @@ func getAllServices(provider *datadog_terraforming.DatadogProvider) []string {
 
 func createDatadogResource(cfg *Config, service string) ([]string, error) {
 	// Create resource
-	if err := cmdRun(cfg, []string{commandTerraformApply, service}, true); err != nil {
+	log.Printf("Creating %s resources", service)
+	if err := cmdRun(cfg, []string{commandTerraformApply, service}); err != nil {
 		return nil, err
 	}
 
@@ -192,27 +213,29 @@ func createDatadogResource(cfg *Config, service string) ([]string, error) {
 		return nil, err
 	}
 	resourceIds := parseTerraformOutput(string(output))
+	log.Printf("Created %s resources. IDS: %s", service, resourceIds)
 
 	return resourceIds, nil
 }
 
 func initializeDatadogProvider(cfg *Config) error {
 	// Initialize the provider
-	if err := cmdRun(cfg, []string{commandTerraformInit}, true); err != nil {
+	log.Print("Initializing the Datadog provider")
+	if err := cmdRun(cfg, []string{commandTerraformInit}); err != nil {
 		return err
 	}
-
+	log.Print("Successfully initialized  the Datadog provider")
 	return nil
 }
 
-func cmdRun(cfg *Config, args []string, cmdLog bool) error {
+func cmdRun(cfg *Config, args []string) error {
 	terraformApiKeyEnvVariable := fmt.Sprintf("DATADOG_API_KEY=%s", cfg.Datadog.apiKey)
-	terraformAPPKeyEnvVariable :=fmt.Sprintf("DATADOG_APP_KEY=%s", cfg.Datadog.appKey)
+	terraformAPPKeyEnvVariable := fmt.Sprintf("DATADOG_APP_KEY=%s", cfg.Datadog.appKey)
 
 	cmd := exec.Command("sh", "-c", strings.Join(args, " "))
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, terraformApiKeyEnvVariable, terraformAPPKeyEnvVariable)
-	if cmdLog == true {
+	if cfg.logCMDOutput {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 	}
