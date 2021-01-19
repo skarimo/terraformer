@@ -94,6 +94,11 @@ func (p *DatadogProvider) Init(args []string) error {
 	p.authV1 = authV1
 
 	configV1 := datadogV1.NewConfiguration()
+
+	// Enable unstable operations
+	configV1.SetUnstableOperationEnabled("GetLogsIndex", true)
+	configV1.SetUnstableOperationEnabled("ListLogIndexes", true)
+
 	datadogClientV1 := datadogV1.NewAPIClient(configV1)
 	p.datadogClientV1 = datadogClientV1
 
@@ -139,6 +144,7 @@ func (p *DatadogProvider) GetSupportedService() map[string]terraformutils.Servic
 	return map[string]terraformutils.ServiceGenerator{
 		"dashboard":   &DashboardGenerator{},
 		"downtime":    &DowntimeGenerator{},
+		"logs_index":  &LogsIndexGenerator{},
 		"monitor":     &MonitorGenerator{},
 		"screenboard": &ScreenboardGenerator{},
 		"synthetics":  &SyntheticsGenerator{},
