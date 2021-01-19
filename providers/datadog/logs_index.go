@@ -24,11 +24,11 @@ import (
 )
 
 var (
-	// DowntimeAllowEmptyValues ...
+	// LogsIndexAllowEmptyValues ...
 	LogsIndexAllowEmptyValues = []string{"filter"}
 )
 
-// DowntimeGenerator ...
+// LogsIndexGenerator ...
 type LogsIndexGenerator struct {
 	DatadogService
 }

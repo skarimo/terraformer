@@ -1410,6 +1410,8 @@ List of supported Datadog services:
     * `datadog_downtime`
 *   `logs_index`
     * `datadog_logs_index`
+*   `logs_index_order`
+    * `datadog_logs_index_order`
 *   `monitor`
     * `datadog_monitor`
 *   `screenboard`
