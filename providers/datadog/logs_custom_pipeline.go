@@ -25,7 +25,7 @@ import (
 
 var (
 	// LogsCustomPipelineAllowEmptyValues ...
-	LogsCustomPipelineAllowEmptyValues = []string{}
+	LogsCustomPipelineAllowEmptyValues = []string{"support_rules"}
 )
 
 // LogsCustomPipelineGenerator ...
