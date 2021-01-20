@@ -35,8 +35,8 @@ type LogsIndexGenerator struct {
 
 func (g *LogsIndexGenerator) createResources(logs_indexes []datadogV1.LogsIndex) []terraformutils.Resource {
 	resources := []terraformutils.Resource{}
-	for _, logs_index := range logs_indexes {
-		resourceName := logs_index.GetName()
+	for _, logsIndex := range logs_indexes {
+		resourceName := logsIndex.GetName()
 		resources = append(resources, g.createResource(resourceName))
 	}
 
@@ -64,12 +64,12 @@ func (g *LogsIndexGenerator) InitResources() error {
 	for _, filter := range g.Filter {
 		if filter.FieldPath == "id" && filter.IsApplicable("logs_index") {
 			for _, value := range filter.AcceptableValues {
-				logs_index, _, err := datadogClientV1.LogsIndexesApi.GetLogsIndex(authV1, value).Execute()
+				logsIndex, _, err := datadogClientV1.LogsIndexesApi.GetLogsIndex(authV1, value).Execute()
 				if err != nil {
 					return err
 				}
 
-				resources = append(resources, g.createResource(logs_index.GetName()))
+				resources = append(resources, g.createResource(logsIndex.GetName()))
 			}
 		}
 	}
@@ -79,11 +79,11 @@ func (g *LogsIndexGenerator) InitResources() error {
 		return nil
 	}
 
-	logs_index_list, _, err := datadogClientV1.LogsIndexesApi.ListLogIndexes(authV1).Execute()
-	logs_index := logs_index_list.GetIndexes()
+	logsIndexList, _, err := datadogClientV1.LogsIndexesApi.ListLogIndexes(authV1).Execute()
+	logsIndex := logsIndexList.GetIndexes()
 	if err != nil {
 		return err
 	}
-	g.Resources = g.createResources(logs_index)
+	g.Resources = g.createResources(logsIndex)
 	return nil
 }
