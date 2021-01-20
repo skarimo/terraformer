@@ -17,9 +17,7 @@ package datadog
 import (
 	"context"
 	"fmt"
-
 	datadogV1 "github.com/DataDog/datadog-api-client-go/api/v1/datadog"
-
 	"github.com/GoogleCloudPlatform/terraformer/terraformutils"
 )
 
@@ -36,8 +34,11 @@ type LogsCustomPipelineGenerator struct {
 func (g *LogsCustomPipelineGenerator) createResources(logs_custom_pipelines []datadogV1.LogsPipeline) []terraformutils.Resource {
 	resources := []terraformutils.Resource{}
 	for _, logs_custom_pipeline := range logs_custom_pipelines {
-		resourceName := logs_custom_pipeline.GetId()
-		resources = append(resources, g.createResource(resourceName))
+		// Import logs custom pipelines only
+		if !logs_custom_pipeline.GetIsReadOnly(){
+			resourceName := logs_custom_pipeline.GetId()
+			resources = append(resources, g.createResource(resourceName))
+		}
 	}
 
 	return resources
