@@ -33,9 +33,9 @@ type LogsArchiveGenerator struct {
 	DatadogService
 }
 
-func (g *LogsArchiveGenerator) createResources(logs_archives []datadogV2.LogsArchiveDefinition) []terraformutils.Resource {
+func (g *LogsArchiveGenerator) createResources(logsArchives []datadogV2.LogsArchiveDefinition) []terraformutils.Resource {
 	resources := []terraformutils.Resource{}
-	for _, logsArchive := range logs_archives {
+	for _, logsArchive := range logsArchives {
 		logsArchiveId := logsArchive.GetId()
 		resources = append(resources, g.createResource(logsArchiveId))
 	}
@@ -68,8 +68,8 @@ func (g *LogsArchiveGenerator) InitResources() error {
 				if err != nil {
 					return err
 				}
-				logs_archive_data := resp.GetData()
-				resources = append(resources, g.createResource(logs_archive_data.GetId()))
+				logsArchiveData := resp.GetData()
+				resources = append(resources, g.createResource(logsArchiveData.GetId()))
 			}
 		}
 	}
