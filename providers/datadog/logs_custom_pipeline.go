@@ -31,12 +31,12 @@ type LogsCustomPipelineGenerator struct {
 	DatadogService
 }
 
-func (g *LogsCustomPipelineGenerator) createResources(logs_custom_pipelines []datadogV1.LogsPipeline) []terraformutils.Resource {
+func (g *LogsCustomPipelineGenerator) createResources(logsCustomPipelines []datadogV1.LogsPipeline) []terraformutils.Resource {
 	resources := []terraformutils.Resource{}
-	for _, logs_custom_pipeline := range logs_custom_pipelines {
+	for _, logsCustomPipeline := range logsCustomPipelines {
 		// Import logs custom pipelines only
-		if !logs_custom_pipeline.GetIsReadOnly(){
-			resourceName := logs_custom_pipeline.GetId()
+		if !logsCustomPipeline.GetIsReadOnly(){
+			resourceName := logsCustomPipeline.GetId()
 			resources = append(resources, g.createResource(resourceName))
 		}
 	}
@@ -65,12 +65,12 @@ func (g *LogsCustomPipelineGenerator) InitResources() error {
 	for _, filter := range g.Filter {
 		if filter.FieldPath == "id" && filter.IsApplicable("logs_custom_pipeline") {
 			for _, value := range filter.AcceptableValues {
-				logs_custom_pipeline, _, err := datadogClientV1.LogsPipelinesApi.GetLogsPipeline(authV1, value).Execute()
+				logsCustomPipeline, _, err := datadogClientV1.LogsPipelinesApi.GetLogsPipeline(authV1, value).Execute()
 				if err != nil {
 					return err
 				}
 
-				resources = append(resources, g.createResource(logs_custom_pipeline.GetId()))
+				resources = append(resources, g.createResource(logsCustomPipeline.GetId()))
 			}
 		}
 	}
@@ -80,10 +80,10 @@ func (g *LogsCustomPipelineGenerator) InitResources() error {
 		return nil
 	}
 
-	logs_custom_pipelines, _, err := datadogClientV1.LogsPipelinesApi.ListLogsPipelines(authV1).Execute()
+	logsCustomPipelines, _, err := datadogClientV1.LogsPipelinesApi.ListLogsPipelines(authV1).Execute()
 	if err != nil {
 		return err
 	}
-	g.Resources = g.createResources(logs_custom_pipelines)
+	g.Resources = g.createResources(logsCustomPipelines)
 	return nil
 }
