@@ -1410,6 +1410,8 @@ List of supported Datadog services:
     * `datadog_downtime`
 *   `logs_custom_pipeline`
     * `datadog_logs_custom_pipeline`
+*   `logs_integration_pipeline`
+    * `datadog_logs_integration_pipeline`
 *   `logs_pipeline_order`
     * `datadog_logs_pipeline_order`
 *   `monitor`
