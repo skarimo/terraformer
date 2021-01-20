@@ -1408,6 +1408,10 @@ List of supported Datadog services:
     * `datadog_dashboard`
 *   `downtime`
     * `datadog_downtime`
+*   `logs_archive`
+    * `datadog_logs_archive`
+*   `logs_archiv_order`
+    * `datadog_logs_archive_order`
 *   `monitor`
     * `datadog_monitor`
 *   `screenboard`
