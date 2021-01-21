@@ -25,7 +25,7 @@ import (
 
 var (
 	// LogsArchiveAllowEmptyValues ...
-	LogsArchiveAllowEmptyValues = []string{"path"}
+	LogsArchiveAllowEmptyValues = []string{"path", "query"}
 )
 
 // LogsArchiveGenerator ...
