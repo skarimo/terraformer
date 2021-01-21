@@ -93,15 +93,21 @@ func (g *LogsCustomPipelineGenerator) InitResources() error {
 func (g *LogsCustomPipelineGenerator) PostConvertHook() error {
 	for i, r := range g.Resources {
 		for k, v := range r.Item {
+			// Hack to properly escape `%{` used in pipeline processors
 			if k == "processor" {
 				var z interface{}
-				jsonByte, _ := json.Marshal(v)
+				jsonByte, err := json.Marshal(v)
+				if err != nil {
+					continue
+				}
 				jsonByte = []byte(strings.ReplaceAll(string(jsonByte), "%{", "%%{"))
-				_ = json.Unmarshal(jsonByte, &z)
+				err = json.Unmarshal(jsonByte, &z)
+				if err = json.Unmarshal(jsonByte, &z); err != nil {
+					continue
+				}
 				g.Resources[i].Item[k] = z
 			}
 		}
 	}
-
 	return nil
 }
