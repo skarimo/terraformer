@@ -16,14 +16,16 @@ package datadog
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	datadogV1 "github.com/DataDog/datadog-api-client-go/api/v1/datadog"
 	"github.com/GoogleCloudPlatform/terraformer/terraformutils"
+	"strings"
 )
 
 var (
 	// LogsCustomPipelineAllowEmptyValues ...
-	LogsCustomPipelineAllowEmptyValues = []string{"support_rules"}
+	LogsCustomPipelineAllowEmptyValues = []string{"support_rules", "filter"}
 )
 
 // LogsCustomPipelineGenerator ...
@@ -85,5 +87,21 @@ func (g *LogsCustomPipelineGenerator) InitResources() error {
 		return err
 	}
 	g.Resources = g.createResources(logsCustomPipelines)
+	return nil
+}
+
+func (g *LogsCustomPipelineGenerator) PostConvertHook() error {
+	for i, r := range g.Resources {
+		for k, v := range r.Item {
+			if k == "processor" {
+				var z interface{}
+				jsonByte, _ := json.Marshal(v)
+				jsonByte = []byte(strings.ReplaceAll(string(jsonByte), "%{", "%%{"))
+				_ = json.Unmarshal(jsonByte, &z)
+				g.Resources[i].Item[k] = z
+			}
+		}
+	}
+
 	return nil
 }

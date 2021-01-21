@@ -23,7 +23,7 @@ import (
 
 var (
 	// LogsIntegrationPipelineAllowEmptyValues ...
-	LogsIntegrationPipelineAllowEmptyValues = []string{"support_rules"}
+	LogsIntegrationPipelineAllowEmptyValues = []string{}
 )
 
 // LogsIntegrationPipelineGenerator ...
